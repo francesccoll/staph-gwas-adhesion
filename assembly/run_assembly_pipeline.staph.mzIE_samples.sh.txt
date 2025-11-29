@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# NOTE: the commands below can be commented out, as they only work on Sanger farm.
+# NOTE: had to add the option '-H $PWD:$assem_dir' to singularity as by default the home directory $HOME is used to store temporary files, leading to disk quota exceeded issues
+
+# Commands needed to make singularity pull work when submitted as a job
+export HTTP_PROXY="wwwcache.sanger.ac.uk:3128"
+export HTTPS_PROXY="${HTTP_PROXY}"
+
+module load ISG/singularity
+
+# singularity cache clean
+
+# bsub -q yesterday -G team81 -J singularity -e singularity_pull.err -o singularity_pull.out -R "select[mem > 10000] rusage[mem=10000]" -M 10000 "singularity build assembly_pipeline.sif docker://francesccoll/assembly_pipeline:amd64"
+
+# Creating samples file based on existing fastq files
+# cd /user/scratch/53.marta_zapotoczna_IE/fastq
+# ls *1.fastq.gz | grep -v "_R2_001.fastq.gz" | sed 's/_1.fastq.gz//g' | sed 's/_R1.fastq.gz//g' | sed 's/_R1_001.fastq.gz//g' > ../mzIE_samples.v2.txt 
+# after re-sequencing bad quality samples
+# ls *1.fastq.gz | grep -v "_R2_001.fastq.gz" | sed 's/_1.fastq.gz//g' | sed 's/_R1.fastq.gz//g' | sed 's/_R1_001.fastq.gz//g' > ../mzIE_samples.v3.txt 
+
+
+output_dir="/user/scratch/53.marta_zapotoczna_IE/assembly/assembly_files/"
+assem_dir="/user/scratch/53.marta_zapotoczna_IE/assembly/";
+fastq_dir="/user/scratch/53.marta_zapotoczna_IE/fastq/";
+samples_file="/user/scratch/53.marta_zapotoczna_IE/mzIE_samples.v3.txt";
+
+# It is important to change directory to where assembly files will be created
+
+cd $assem_dir
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+	echo $sample
+
+	fastq1_suffix="_R1.fastq.gz";
+	fastq2_suffix="_R2.fastq.gz";
+	fastq1=$fastq_dir$sample$fastq1_suffix;
+
+	if [ ! -f $fastq1 ]
+	then
+		fastq1_suffix="_R1_001.fastq.gz";
+		fastq2_suffix="_R2_001.fastq.gz";
+		fastq1=$fastq_dir$sample$fastq1_suffix;
+
+		if [ ! -f $fastq1 ]
+		then
+			fastq1_suffix="_1.fastq.gz";
+			fastq2_suffix="_2.fastq.gz";
+			fastq1=$fastq_dir$sample$fastq1_suffix;
+		fi
+	fi
+
+	
+	if [ -f $fastq1 ]
+	then
+		output=$output_dir$sample".spades.improved.fasta";
+		if [ ! -f $output ]
+		then
+			bsub -q normal -G team81 -J $sample"_assembly_pipeline" -o $sample"_assembly_pipeline.out" -n8 -R "span[hosts=1] select[mem > 10000] rusage[mem=10000]" -M 10000 "singularity run --bind /user/scratch/53.marta_zapotoczna_IE:/data -H $PWD:$assem_dir assembly_pipeline.sif assembly_pipeline.py --forward_reads /data/fastq/$sample$fastq1_suffix --reverse_reads /data/fastq/$sample$fastq2_suffix --sample_id $sample --spades_threads 8 --results_dir /data/assembly --spades_dir /data/assembly/spades_dir/$sample"_spades" --improved_dir /data/assembly/improved_dir/$sample"_improved""
+		fi
+	else
+		echo $fastq1" could not be found"
+	fi
+done
+
+

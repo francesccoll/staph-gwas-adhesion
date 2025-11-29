@@ -1,0 +1,49 @@
+#!/bin/sh
+
+set -e
+
+# This bash script is used to annotate assemblies using Bakta
+
+module load bakta/1.5.1-c1
+
+## List available DB versions
+# bakta_db list
+# Bakta software version: 1.5.1
+# Required database schema version: 4
+# Available DB versions:
+# 4.0	2022-08-29	10.5281/zenodo.7025248
+
+## Downloading latest Bakta database
+# bakta_db download --output /User/53.marta_zapotoczna_IE/assembly/bakta_db/
+# NOTE: the download was not complete (ERROR: database file (antifam.h3i) not readable!) so it was downloaded manually, see commands below
+
+# Manual download of database
+# bsub -q normal -G team346 -J db -o db.out -R "select[mem > 100000] rusage[mem= 100000]" -M 100000 wget https://zenodo.org/record/7025248/files/db.tar.gz
+# tar -xzf db.tar.gz
+# rm db.tar.gz
+# amrfinder_update --force_update --database db/amrfinderplus-db/
+
+assembly_dir="/User/53.marta_zapotoczna_IE/assembly/assembly_files/"
+samples_file="/User/53.marta_zapotoczna_IE/mzIE_samples.v3.txt";
+bakta_dir="/User/53.marta_zapotoczna_IE/assembly/bakta_results/";
+bakta_db="/User/53.marta_zapotoczna_IE/assembly/db/";
+
+# It is important to change directory to where assembly files will be created
+
+cd /User/53.marta_zapotoczna_IE/assembly
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+
+echo $sample
+results_dir=$bakta_dir$sample;
+assembly=$assembly_dir$sample".spades.improved.fasta";
+output=$bakta_dir$sample".spades.improved.gff3";
+if [[ ! -f $output ]]
+then
+	bsub -q normal -G team346 -J $sample"_bakta" -o $sample"_bakta.out" -n8 -R "span[hosts=1] select[mem > 10000] rusage[mem=10000]" -M 10000 "bakta --db $bakta_db --output $results_dir --threads 8 $assembly"
+fi
+
+done

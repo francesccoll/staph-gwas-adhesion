@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set -e
+
+# This bash script is used to annotate assemblies using Prokka
+
+# NOTE: Picasso has already a module with prokka installed, latest version used
+
+# cat mzIE_phen_samples.kept.phen | awk -F' ' '{ print $1}' | grep -v "samples" > mzIE_phen_samples.samples.txt
+samples_file="/User/53.marta_zapotoczna_IE/pyseer/mzIE_phen_samples.samples.txt";
+
+prokka_dir="/User/53.marta_zapotoczna_IE/assembly/prokka_results/";
+
+assembly_dir="/User/53.marta_zapotoczna_IE/assembly/assembly_files/";
+
+template_script="submit_job.prokka.template.sh";
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+
+echo $sample
+
+# Check if improved assembly file exists
+
+contigs_file=$assembly_dir$sample".spades.improved.fasta";
+
+output_dir=$prokka_dir$sample"_prokka/"; # output directory
+
+gff_file=$output_dir$sample".gff"; # output file
+
+if [ -f $contigs_file ] 
+then
+
+if [ ! -f $gff_file ]
+then
+
+# Then run prokka
+# NOTE: default database used: Prokka database root folders (default '/mnt/home/soft/prokka/programs/x86_64/1.14.5/db')
+
+prokka_command="prokka --outdir "$output_dir" --prefix "$sample" "$contigs_file;
+
+echo $prokka_command
+
+echo $prokka_command > $sample"_prokka_command.sh"
+job_id=$sample"_prokka";
+job_script="submit_job.prokka."$sample".sh";
+cat $template_script $sample"_prokka_command.sh" | sed "s/template_job/$job_id/g" > $job_script
+rm $sample"_prokka_command.sh"
+
+# sbatch $job_script
+
+fi
+fi
+done

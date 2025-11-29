@@ -1,0 +1,35 @@
+#!/usr/bash
+
+set -e
+
+# This script is used to re-name contig ids in assemblies as this is needed to properly annotate kmers
+
+assembly_dir="/user/lustre_scratch/53.marta_zapotoczna_IE/assembly/assembly_files/";
+samples_file="/user/lustre_scratch/53.marta_zapotoczna_IE/mzIE_samples.v3.txt";
+
+# It is important to change directory to where assembly files will be created
+
+cd $assembly_dir
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+
+echo $sample
+assembly1=$assembly_dir$sample".spades.improved.fasta";
+assembly2=$assembly_dir$sample".spades.improved.renamed.fasta";
+contig_names=$assembly_dir$sample".spades.improved.contig_names.txt";
+
+if [[ -f $assembly1 ]]
+then
+if [[ ! -f $assembly2 ]]
+then
+
+cat $assembly1 | grep ">" | sed 's/>//g' | awk -v sam="${sample}" -F'\t' '{ print $1"\t"sam"."$1}' > $contig_names
+
+python3 ~/scripts/replace_fasta_ids.py -i $assembly1 -t $contig_names -o $assembly2
+	
+fi
+fi
+done
