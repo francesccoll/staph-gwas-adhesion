@@ -1,0 +1,6 @@
+Adhesion_to_Fg_1_25_ug_mL_absolute
+Adhesion_to_Fg_5_ug_mL_absolute
+Adhesion_to_Fg_D
+Adhesion_to_Fn_5_ug_mL_absolute
+Adhesion_to_Fn_20_ug_mL_absolute
+Adhesion_to_Fn_D

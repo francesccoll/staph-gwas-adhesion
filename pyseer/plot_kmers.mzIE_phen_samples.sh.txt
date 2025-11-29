@@ -1,0 +1,60 @@
+
+# This bash script contains the commands used to plot Pyseer kmer output files
+# NOTE: but before that, kmers need to be mapped (annotate_hits_pyseer-runner.py), annotated (annotate_kmers_pyseer.py) and summarised (summarise_kmers_pyseer.py)
+# See script: annotate_kmers.mzIE_phen_samples.sh.txt and summarise_kmers.mzIE_phen_samples.sh.txt
+
+
+############################################################################################################################################
+### 				Common bash variables: directories, scripts, common bash variables, etc.				 ###
+############################################################################################################################################
+
+working_dir="/User/53.marta_zapotoczna_IE/pyseer/kmers/kmers_assoc_ann_picasso/";
+
+phenotypes_file="/User/53.marta_zapotoczna_IE/pyseer/phenotypes_tested.txt";
+
+count_patterns_script="/Users/scripts/count_patterns.py";
+
+dataset="mzIE_phen_samples";
+
+unit="kmers_30-100bp";
+
+alpha="0.05";
+
+phenotypes=`cat $phenotypes_file | awk -F'\t' '{ print $1}'`;
+
+cd $working_dir
+
+
+
+############################################################################################################################################
+### 				Plotting all loci with Pyseer associated kmers - original phenotypes - top 1%			 ###
+############################################################################################################################################
+
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.top1per.csv"; # not used, intergenic regions not annotated > to check
+# pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.csv";
+patterns_file=$working_dir$prefix".patterns.txt";
+output_plot_prefix=$working_dir$prefix".pyseer_output.sum_kmers.top1per";
+pval_thres=`python3 $count_patterns_script --alpha $alpha $patterns_file | grep "Threshold" | awk -F'\t' '{ print $2}'`;
+echo $pval_thres
+
+# pval_thres used to plot horizontal dotted line
+# pval_thres_show used to plot gene labels below this threshold
+pval_thres_show="1.0E-05"; # for all
+# pval_thres_show="1.0E-04"; # for Adhesion_to_Fg_5_ug_mL_absolute, Adhesion_to_Fn_5_ug_mL_absolute, Adhesion_to_Fn_20_ug_mL_absolute. Output plot names added "more_loci_showed" suffix.
+
+pyseer_kmers_map=$working_dir$prefix".pyseer_output.ann_kmers.top1per.csv";
+output_plot_prefix=$working_dir$prefix".pyseer_output.ann_kmers.top1per";
+
+Rscript ../plot_kmers_pyseer.manhattan_plot.R --pyseer_kmer_map $pyseer_kmers_map --pyseer_kmer_sum $pyseer_kmers_sum --p_value_threshold $pval_thres --p_value_threshold_show $pval_thres_show --output_plot_prefix $output_plot_prefix --reference MRSA252
+
+Rscript ../plot_kmers_pyseer.manhattan_plot.R --pyseer_kmer_map $pyseer_kmers_map --pyseer_kmer_sum $pyseer_kmers_sum --p_value_threshold $pval_thres --p_value_threshold_show $pval_thres_show --output_plot_prefix $output_plot_prefix --reference NCTC8325
+
+done
+

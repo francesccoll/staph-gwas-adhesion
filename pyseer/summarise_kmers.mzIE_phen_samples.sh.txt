@@ -1,0 +1,111 @@
+
+############################################################################################################################################
+### 				Common bash variables: directories, scripts, common bash variables, etc.				 ###
+############################################################################################################################################
+
+working_dir="/User/53.marta_zapotoczna_IE/pyseer/kmers_assoc_ann/";
+
+phenotypes_file="/User/53.marta_zapotoczna_IE/pyseer/phenotypes_tested.adhesion.txt";
+
+dataset="mzIE_phen_samples";
+
+phenotypes=`cat $phenotypes_file | awk -F'\t' '{ print $1}'`;
+
+cd $working_dir
+
+# Pyseer activated as it contains Python packages required by summarise_kmers_pyseer.py
+conda activate pyseer_env
+
+
+############################################################################################################################################
+### 				      Summarising TOP associated-mapped-annotated kmers per locus					 ###
+############################################################################################################################################
+
+
+unit="kmers_30-100bp";
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top.csv";
+pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.top.csv";
+
+if [ ! -f $pyseer_kmers_sum ]
+then
+
+python3 ../summarise_kmers_pyseer.py --pyseer_kmers_ann_file $pyseer_kmers_ann --output_file $pyseer_kmers_sum
+
+fi
+
+done
+
+
+############################################################################################################################################
+### 				      Summarising TOP2 associated-mapped-annotated kmers per locus					 ###
+############################################################################################################################################
+
+
+unit="kmers_30-100bp";
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top2.csv";
+pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.top2.csv";
+
+if [ ! -f $pyseer_kmers_sum ]
+then
+
+python3 ../summarise_kmers_pyseer.py --pyseer_kmers_ann_file $pyseer_kmers_ann --output_file $pyseer_kmers_sum
+
+fi
+
+done
+
+
+############################################################################################################################################
+### 				      Summarising TOP 1% associated-mapped-annotated kmers per locus					 ###
+############################################################################################################################################
+
+# top 1% kmers - used for plotting purposes
+
+unit="kmers_30-100bp";
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top1per.csv";
+pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.top1per.csv";
+
+python3 ../summarise_kmers_pyseer.py --pyseer_kmers_ann_file $pyseer_kmers_ann --output_file $pyseer_kmers_sum
+
+done
+
+
+############################################################################################################################################
+### 				      Summarising associated-mapped-annotated kmers per locus					 ###
+############################################################################################################################################
+
+unit="kmers_30-100bp";
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.csv";
+pyseer_kmers_sum=$working_dir$prefix".pyseer_output.sum_kmers.csv";
+
+python3 ../summarise_kmers_pyseer.py --pyseer_kmers_ann_file $pyseer_kmers_ann --output_file $pyseer_kmers_sum
+
+done

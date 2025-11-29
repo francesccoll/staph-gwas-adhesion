@@ -1,0 +1,173 @@
+# This bash script contains the commands used to extract and annotated associated kmers
+
+############################################################################################################################################
+### 				Common bash variables: directories, scripts, common bash variables, etc.				 ###
+############################################################################################################################################
+
+working_dir="/User/53.marta_zapotoczna_IE/pyseer/kmers_assoc_ann/";
+
+pyseer_out_dir="/User/53.marta_zapotoczna_IE/pyseer/pyseer_output/";
+
+phenotypes_file="/User/53.marta_zapotoczna_IE/pyseer/phenotypes_tested.adhesion.txt";
+
+refs_file=$working_dir"references.txt";
+
+refs_file_gff=$working_dir"references.gff.txt";
+
+refs_mock_file=$working_dir"references.mock.txt";
+
+refs_mock_file_gff=$working_dir"references.mock.gff.txt";
+
+alpha="0.05";
+
+dataset="mzIE_phen_samples";
+
+phenotypes=`cat $phenotypes_file | awk -F'\t' '{ print $1}'`;
+
+cd $working_dir
+
+# Scripts and tools
+
+# module load pyseer/1.3.3--py_0
+# conda activate pyseer_env
+# NOTE: see script pyseer_commands.mzIE_phen_samples.kmers.sh.txt for Pyseer installation commands
+
+# module load bwa/0.7.17-r1188
+# NOTE: bwa/0.7.19-r1273 installed on pyseer_env used
+
+## PREVIOUS FARM NOTE: make sure any previous conda environment is turned off
+# conda deactivate
+# module load ISG/R/4.1.3
+module load R/4.1.0
+
+# annotate_hits_pyseer="/nfs/users/nfs_f/fc4/lustre_scratch/software/pyseer/annotate_hits_pyseer-runner.py";
+# PREVIOUS FARM NOTE: annotate_hits_pyseer commands from pyseer/1.3.3--py_0 not used. Instead latest version of script used pyseer 1.3.11-dev
+# PREVIOUS FARM NOTE: bwa needed to be loaded: module load bwa/0.7.17-r1188
+
+annotate_hits_pyseer="annotate_hits_pyseer";
+# NOTE: On Picasso, the command "annotate_hits_pyseer" from pyseer 1.4.0 will be used
+
+annotate_hits_pyseer="/User/software/pyseer/annotate_hits_pyseer-runner.py";
+
+# cd /User/software
+# git clone https://github.com/mgalardini/pyseer
+pyseer_scripts_dir="/User/software/pyseer/scripts/";
+
+count_patterns_script=$pyseer_scripts_dir"count_patterns.py";
+
+filter_script="/User/53.marta_zapotoczna_IE/pyseer/plotting_scripts/filterPyseerOutput.r";
+
+annotate_kmers_pyseer="/User/53.marta_zapotoczna_IE/pyseer/annotate_kmers_pyseer.py";
+
+
+
+############################################################################################################################################
+### 							Annotating kmers								 ###
+############################################################################################################################################
+
+unit="kmers_30-100bp";
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_output=$pyseer_out_dir$prefix".pyseer_output.csv";
+pyseer_output=$pyseer_out_dir$prefix".pyseer_output.lin.csv"; # same results as .pyseer_output.csv but with reported lineage effects
+patterns_file=$pyseer_out_dir$prefix".patterns.txt";
+pyseer_kmers_assoc=$working_dir$prefix".pyseer_output.assoc_kmers.csv";
+pyseer_kmers_map=$working_dir$prefix".pyseer_output.map_kmers.csv";
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.csv";
+
+# 1. Find p-value threshold
+# pval_thres=`python3 $count_patterns_script --alpha $alpha $patterns_file | grep "Threshold" | awk -F'\t' '{ print $2}'`;
+# echo $pval_thres
+
+# Selected p-values to map and annotate top significant k-mers
+
+pval_thres=0.00001; # < 10-5 for all six Adhesion phenotypes
+
+pyseer_kmers_assoc=$working_dir$prefix".pyseer_output.assoc_kmers.top.csv";
+pyseer_kmers_map=$working_dir$prefix".pyseer_output.map_kmers.top.csv";
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top.csv";
+
+pval_thres=0.0001; # < 10-4 for all six Adhesion phenotypes
+
+pyseer_kmers_assoc=$working_dir$prefix".pyseer_output.assoc_kmers.top2.csv";
+pyseer_kmers_map=$working_dir$prefix".pyseer_output.map_kmers.top2.csv";
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top2.csv";
+
+# For top 1% associated kmers - used for plotting
+
+pyseer_kmers_assoc=$working_dir$prefix".pyseer_output.assoc_kmers.top1per.csv";
+pyseer_kmers_map=$working_dir$prefix".pyseer_output.map_kmers.top1per.csv";
+pyseer_kmers_ann=$working_dir$prefix".pyseer_output.ann_kmers.top1per.csv";
+
+
+# 2. Extract associated kmers
+if [ ! -f $pyseer_kmers_assoc ]
+then
+# Rscript $filter_script --pyseer_output $pyseer_output --p_value_threshold $pval_thres --output $pyseer_kmers_assoc --keep_top_variants --top_percentile 0.01
+# Selecting kmers based on specific pval_thres for specific phenotypes
+Rscript $filter_script --pyseer_output $pyseer_output --p_value_threshold $pval_thres --output $pyseer_kmers_assoc
+fi
+
+# Filtering by p-value threshold - default
+
+# [1] "Info: 11395077 variants extracted from mzIE_phen_samples.Adhesion_to_Fg_1_25_ug_mL_absolute.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 7 variants kept in mzIE_phen_samples.Adhesion_to_Fg_1_25_ug_mL_absolute.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# [1] "Info: 11395077 variants extracted from mzIE_phen_samples.Adhesion_to_Fg_5_ug_mL_absolute.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 1 variants kept in mzIE_phen_samples.Adhesion_to_Fg_5_ug_mL_absolute.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# [1] "Info: 11395077 variants extracted from pyseer_output/mzIE_phen_samples.Adhesion_to_Fg_D.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 78 variants kept in mzIE_phen_samples.Adhesion_to_Fg_D.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# [1] "Info: 11395077 variants extracted from mzIE_phen_samples.Adhesion_to_Fn_5_ug_mL_absolute.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 0 variants kept in mzIE_phen_samples.Adhesion_to_Fn_5_ug_mL_absolute.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# [1] "Info: 11395077 variants extracted from mzIE_phen_samples.Adhesion_to_Fn_20_ug_mL_absolute.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 1 variants kept in mzIE_phen_samples.Adhesion_to_Fn_20_ug_mL_absolute.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# [1] "Info: 11395077 variants extracted from mzIE_phen_samples.Adhesion_to_Fn_D.kmers_30-100bp.pyseer_output.csv"
+# [1] "Filtering Pyseer variants using 1.05e-07 p-value threshold"
+# [1] "Info: 0 variants kept in mzIE_phen_samples.Adhesion_to_Fn_D.kmers_30-100bp.pyseer_output.assoc_kmers.csv"
+
+# 3. Mapping associated kmers using annotate_hits_pyseer
+
+# IMPORTANT: the script annotate_hits_pyseer must be run within a separate working directory, otherwise some files produced by the script (e.g. “tmp_bed”, and bwa index files) 
+# may be deleted or overwritten if the script is called multiple times (in multiple jobs), leading the script run to fail
+
+if [ ! -f $pyseer_kmers_map ]
+then
+tmp_dir=$working_dir$phenotype"_kmer_ann";
+mkdir $tmp_dir
+cd $tmp_dir
+# Coping reference genomes locally into $tmp_dir
+cp `cat $refs_file_gff | awk -F'\t' '{ print $1}'` .
+cp `cat $refs_file_gff | awk -F'\t' '{ print $2}'` .
+# Creating a local copy of references.txt file for local genome copies
+refs_local_file=$tmp_dir"/references.txt";
+cat $refs_mock_file_gff | sed "s|replace_dir|$tmp_dir|g" > $refs_local_file
+# Submitting job
+python3 $annotate_hits_pyseer $pyseer_kmers_assoc $refs_local_file $pyseer_kmers_map --tmp-prefix $tmp_dir
+
+cd ..
+fi
+
+if [ ! -f $pyseer_kmers_ann ]
+then
+
+python3 $annotate_kmers_pyseer --pyseer_kmers_file $pyseer_kmers_map --map_genomes $refs_file --output_file $pyseer_kmers_ann
+
+else
+echo $pyseer_kmers_ann" already found"
+fi
+
+done

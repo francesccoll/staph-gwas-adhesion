@@ -1,0 +1,48 @@
+#!/bin/sh
+
+set -e
+
+# This bash script is used to extract kmer presence/absence of associated kmers from original fsm lite output file
+
+# See prior and posterior steps in script check_kmer_redundancy.picasso.R
+
+# First on Mac, after running first part in check_kmer_redundancy.picasso.R, do:
+# cd /Users/francesccoll/fellowship/2.projects/53.marta_zapotoczna_IE/pyseer_follow_up/kmer_groups
+# scp *.grep_kmers.csv resh000371@picasso.scbi.uma.es:/mnt/home/users/csic108_res/resh000371/53.marta_zapotoczna_IE/pyseer/kmers_groups/
+
+#######################################################################################################################
+### 			Common bash variables: directories, scripts, common bash variables, etc.			          ###
+#######################################################################################################################
+
+working_dir="/mnt/home/users/csic108_res/resh000371/53.marta_zapotoczna_IE/pyseer/kmers_groups/";
+
+phenotypes_file="/mnt/home/users/csic108_res/resh000371/53.marta_zapotoczna_IE/pyseer/phenotypes_tested.txt";
+
+kmers_fsm_file="/mnt/home/users/csic108_res/resh000371/53.marta_zapotoczna_IE/kmers/mzIE_phen_samples.fsm_kmers.30-100bp.txt.gz";
+
+dataset="mzIE_phen_samples";
+unit="kmers_30-100bp";
+assoc="top"; # subset of kmers annotated
+assoc="top2"; # subset of kmers annotated
+
+phenotypes=`cat $phenotypes_file | awk -F'\t' '{ print $1}'`;
+
+cd $working_dir
+
+for phenotype in $phenotypes
+do
+
+echo $phenotype
+
+prefix=$dataset"."$phenotype"."$unit;
+pyseer_grep_file=$working_dir$prefix".pyseer_output.ann_kmers."$assoc".grep_kmers.csv";
+output_file=$working_dir$prefix".pyseer_output.ann_kmers."$assoc".fsm_kmers.30-100bp.txt";
+
+echo $pyseer_grep_file
+
+echo "Grepping "$kmers_fsm_file"..."
+zcat $kmers_fsm_file | grep -f $pyseer_grep_file > tmp_file
+cat tmp_file | tr '|' '\t' > $output_file
+rm tmp_file
+
+done
