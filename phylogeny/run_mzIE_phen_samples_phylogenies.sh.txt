@@ -1,0 +1,65 @@
+
+### core-genome MSA
+
+align1="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.msa";
+align2="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.core.msa";
+
+dir2="/User/11.snp_cut-off/core_genome/richardson2018/roary/";
+core_genome_bed=$dir2"ST30_strain_MRSA252.BX571856.richardson2018_core_genome.one_copy.bed";
+core_genome_tab=$dir2"ST30_strain_MRSA252.BX571856.richardson2018_core_genome.one_copy.tab";
+
+seqkit stats $align1
+# file                                    format  type  num_seqs      sum_len    min_len    avg_len    max_len
+# mzIE_phen_samples.snippy_consensus.msa  FASTA   DNA        234  679,212,846  2,902,619  2,902,619  2,902,619
+
+python2.7 ~/bin/remove_blocks_from_aln.py -a $align1 -o $align2 -t $core_genome_tab -k
+# Found 1766 regions
+# Adjusted 234 sequences
+# Original alignment length: 2902619	New alignment length:1755981
+# Done.
+
+
+### IQtree
+
+cd /User/53.marta_zapotoczna_IE/phylogeny/iqtree
+
+align="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.core.msa";
+prefix="mzIE_phen_samples.snippy_consensus.core";
+
+snp-sites -C $align
+# 547886,272705,275163,551646
+
+module load iqtree/1.6.10=he860b03_0-c1
+
+iqtree -fconst 547886,272705,275163,551646 -s $align -pre $prefix -nt AUTO -ntmax 24 -mem 20G -bb 1000 -m MFP
+
+
+
+### Gubbins
+
+module load gubbins/3.2.1
+
+cd /User/53.marta_zapotoczna_IE/phylogeny/gubbins
+
+align="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.core.msa"
+align2="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.core.tmp.msa";
+# cat $align | sed 's/#/_/g' > $align2
+
+# NOTE: no out-group used
+
+prefix="mzIE_phen_samples.core";
+starting_tree="/User/53.marta_zapotoczna_IE/phylogeny/iqtree/mzIE_phen_samples.snippy_consensus.core.contree";
+
+# NOTE: --filter-percentage had to be increased from default value (25%) as all sequenced failed this check.
+# This is due to mapping clade B samples to clade A reference genome
+
+run_gubbins.py $align2 --prefix $prefix --use-time-stamp --threads 24 --starting-tree $starting_tree --filter-percentage 40
+
+
+
+
+
+
+
+
+

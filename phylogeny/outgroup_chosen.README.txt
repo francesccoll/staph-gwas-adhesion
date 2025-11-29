@@ -1,0 +1,3 @@
+
+
+MPROS isolate 14623_6#81 (accession: ERR737458) is chosen as outgroup as indicated in aanensen2016 "To root the tree, we used the sequence of BB155, an S. aureus reference genome that belongs to ST152. This was considered an appropriate outgroup as, according to MLST data, ST152 is a divergent lineage approximately equidistant from each of the major S. aureus STs and CCs previously recorded in Europe (54)"
