@@ -1,0 +1,65 @@
+#!/bin/sh
+
+module load snippy/4.6.0
+
+# ref="nctc8325";
+ref="mw2";
+# ref="ca-347";
+# ref_file="NCTC8325_CP000253.1.gb";
+ref_file="MW2_BA000033.2.gb";
+# ref_file="CA-347_CP006044.1.gb";
+
+fastq_dir="/User/53.marta_zapotoczna_IE/fastq/";
+working_dir="/User/53.marta_zapotoczna_IE/mapping/";
+base_dir="/User/53.marta_zapotoczna_IE/";
+snippy_dir=$working_dir"snippy_"$ref"/";
+vcf_dir=$working_dir"snippy_vcfs_2/"; # for mzIE_phen_samples.txt only
+vcf_dir=$working_dir"snippy_vcfs_"$ref"/"; # for mzIE_phen_samples.txt only
+
+samples_file="/User/53.marta_zapotoczna_IE/mzIE_phen_samples.txt";
+
+cd $working_dir
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+	echo $sample
+
+	fastq1_suffix="_R1.fastq.gz";
+	fastq2_suffix="_R2.fastq.gz";
+	fastq1=$fastq_dir$sample$fastq1_suffix;
+
+	if [ ! -f $fastq1 ]
+	then
+		fastq1_suffix="_R1_001.fastq.gz";
+		fastq2_suffix="_R2_001.fastq.gz";
+		fastq1=$fastq_dir$sample$fastq1_suffix;
+
+		if [ ! -f $fastq1 ]
+		then
+			fastq1_suffix="_1.fastq.gz";
+			fastq2_suffix="_2.fastq.gz";
+			fastq1=$fastq_dir$sample$fastq1_suffix;
+		fi
+	fi
+
+	out_vcf=$snippy_dir$sample"/snps.vcf";
+	out_vcf=$vcf_dir$sample".vcf.gz";
+
+	if [ -f $fastq1 ]
+	then
+		if [ ! -f $out_vcf ]
+		then
+			bsub -q normal -J $sample"_snippy" -o $sample"_snippy.out" -n8 -R "span[hosts=1] select[mem > 10000] rusage[mem=10000]" -M 10000 snippy --outdir $base_dir"mapping/snippy/"$sample"_"$ref --ref $base_dir"mapping/"$ref_file --R1 $base_dir"fastq/"$sample$fastq1_suffix --R2 $base_dir"/fastq/"$sample$fastq2_suffix
+		fi
+	else
+		echo $fastq1" could not be found"
+	fi
+done
+
+
+# /User/53.marta_zapotoczna_IE/fastq/ST20091666_1.fastq.gz could not be found
+# /User/53.marta_zapotoczna_IE/fastq/ST20101794_1.fastq.gz could not be found
+
+

@@ -1,0 +1,19 @@
+
+
+# Creating multiple alignment from consensus files
+
+consensus_dir="/User/53.marta_zapotoczna_IE/mapping/snippy_consensus/";
+
+align="/User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.msa";
+
+cd $consensus_dir
+
+# cat *.consensus.fa > $align
+
+cat `cat ../../mzIE_phen_samples.txt | awk -F'\t' '{ print "/User/53.marta_zapotoczna_IE/mapping/snippy_consensus/"$1".consensus.fa"}'` > $align
+
+# rm -r $consensus_dir
+
+seqkit stats $align 
+# file                                                                                                          format  type  num_seqs      sum_len    min_len    avg_len    max_len
+# /User/53.marta_zapotoczna_IE/mapping/mzIE_phen_samples.snippy_consensus.msa  FASTA   DNA        234  679,212,846  2,902,619  2,902,619  2,902,619

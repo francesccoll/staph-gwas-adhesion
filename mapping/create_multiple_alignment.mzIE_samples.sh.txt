@@ -1,0 +1,14 @@
+
+
+# Creating multiple alignment from consensus files
+
+consensus_dir="/User/53.marta_zapotoczna_IE/mapping/aus0004_consensus/";
+
+align="/User/53.marta_zapotoczna_IE/mapping/mzIE_samples.v2.mfa";
+align="/User/53.marta_zapotoczna_IE/mapping/mzIE_samples.v3.mfa";
+
+cd $consensus_dir
+
+cat *.fa > $align
+
+rm -r $consensus_dir

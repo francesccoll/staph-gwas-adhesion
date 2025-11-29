@@ -1,0 +1,35 @@
+#!/bin/sh
+
+working_dir="/User/53.marta_zapotoczna_IE/mapping/";
+snippy_dir=$working_dir"snippy/";
+mapping_stats_dir=$working_dir"mapping_stats/";
+script="/User/software/get_mapping_stats.py";
+samples_file="/User/53.marta_zapotoczna_IE/mzIE_phen_samples.txt";
+
+module load samtools/1.9
+module load bcftools/1.9
+
+cd $working_dir
+
+laSamples=`cat $samples_file | awk -F'\t' '{ print $1}'`;
+
+for sample in $laSamples
+do
+	echo $sample
+
+	vcf_file=$snippy_dir$sample"/snps.raw.vcf";
+	bam_file=$snippy_dir$sample"/snps.bam";
+	out_file=$mapping_stats_dir$sample".mapping_qc_stats.csv";
+
+	if [ -f $vcf_file ]
+	then
+		if [ ! -f $out_file ]
+		then
+			bsub -q normal -J $sample"_stats" -o $sample"_stats.out" -R "select[mem > 2000] rusage[mem=2000]" -M 2000 "python3 $script --bam_file $bam_file --vcf_file $vcf_file --sample_id $sample"
+		fi
+	else
+		echo $vcf_file" could not be found"
+	fi
+done
+
+

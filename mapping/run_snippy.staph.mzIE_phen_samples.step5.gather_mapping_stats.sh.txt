@@ -1,0 +1,17 @@
+
+cd /User/53.marta_zapotoczna_IE/mapping/mapping_stats
+
+# cat *.mapping_qc_stats.csv | grep -v "^sample_id" | grep -v -e '^$' > ../mzIE_phen_samples.mapping_qc_stats.csv
+
+cat `cat ../../mzIE_phen_samples.txt | awk -F'\t' '{ print "/User/53.marta_zapotoczna_IE/mapping/mapping_stats/"$1".mapping_qc_stats.csv"}'` | grep -v "^sample_id" | grep -v -e '^$' > ../mzIE_phen_samples.mapping_qc_stats.csv
+
+# header added manually
+
+cd /User/53.marta_zapotoczna_IE/mapping/snippy_consensus
+
+# cat *.consensus.stats.csv | grep -v "^sample" > ../mzIE_phen_samples.consensus.stats.csv
+
+cat `cat ../../mzIE_phen_samples.txt | awk -F'\t' '{ print "/User/53.marta_zapotoczna_IE/mapping/snippy_consensus/"$1".consensus.stats.csv"}'` | grep -v "^sample" > ../mzIE_phen_samples.consensus.stats.csv
+
+# header added manually
+

@@ -1,0 +1,35 @@
+
+#!/bin/bash
+
+set -e
+
+# NOTE: this bash script used create_snippy_consensus.py to create a version of the reference genome with both substitution variants and missing calls initiated from Snippy output files
+
+samples_file="/User/53.marta_zapotoczna_IE/mzIE_phen_samples.txt";
+reference="/User/53.marta_zapotoczna_IE/mapping/MRSA252_BX571856.fasta";
+snippy_dir="/User/53.marta_zapotoczna_IE/mapping/snippy/";
+output_dir="/User/53.marta_zapotoczna_IE/mapping/snippy_consensus/";
+
+laSamples=`awk -F'\t' '{ print $1}' $samples_file`;
+
+cd /User/53.marta_zapotoczna_IE/mapping
+
+for sample in $laSamples
+do
+
+echo $sample
+
+out_dir=$snippy_dir$sample;
+consensus_subs=$out_dir"/snps.consensus.subs.fa";
+aligned=$out_dir"/snps.aligned.fa";
+output=$output_dir$sample".consensus.fa";
+output2=$output_dir$sample".consensus.stats.csv";
+
+if [ -f $consensus_subs ]
+then
+	if [ ! -f $output ]
+	then
+		bsub -q normal -J $sample"_snc" -o $sample"_snc.out" -R "select[mem > 2000] rusage[mem=2000]" -M 2000 "python3 ~/scripts/create_snippy_consensus.py --reference $reference --consensus_subs $consensus_subs --aligned $aligned --output $output --sample_id $sample --mapping_stats $output2"
+	fi
+fi
+done

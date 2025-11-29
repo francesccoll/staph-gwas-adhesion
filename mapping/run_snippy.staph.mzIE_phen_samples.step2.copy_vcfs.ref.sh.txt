@@ -1,0 +1,44 @@
+#!/bin/sh
+
+set -e
+
+# ref="nctc8325";
+ref="mw2";
+# ref="ca-347";
+
+samples_file="/User/53.marta_zapotoczna_IE/mzIE_phen_samples.txt";
+snippy_dir="/User/53.marta_zapotoczna_IE/mapping/snippy/";
+snippy_vcf_dir="/User/53.marta_zapotoczna_IE/mapping/snippy_vcfs_"$ref"/";
+
+laSamples=`awk -F'\t' '{ print $1}' $samples_file`;
+
+for sample in $laSamples
+do
+	echo $sample
+	out_dir=$snippy_dir$sample"_"$ref;
+	out_vcf=$out_dir"/snps.vcf";
+	out_vcf2=$snippy_vcf_dir$sample".vcf";
+
+	if [ -f $out_vcf ]
+	then
+		if [ ! -f $out_vcf2 ]
+		then
+			cp $out_vcf $out_vcf2
+			bgzip-1.9 -c $out_vcf2 > $out_vcf2".gz"
+			tabix-1.9 -p vcf $out_vcf2".gz"
+		fi
+	fi
+
+	out_vcf=$out_dir"/snps.raw.vcf";
+	out_vcf2=$snippy_vcf_dir$sample".raw.vcf";
+
+	if [ -f $out_vcf ]
+	then
+		if [ ! -f $out_vcf2 ]
+		then
+			cp $out_vcf $out_vcf2
+			bgzip-1.9 -c $out_vcf2 > $out_vcf2".gz"
+			tabix-1.9 -p vcf $out_vcf2".gz"
+		fi
+	fi
+done
